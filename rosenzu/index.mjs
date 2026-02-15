@@ -5,7 +5,7 @@ import{readFile}from'node:fs/promises'
 
 console.log(
 	rosenzu(
-		await readFile('data.txt','utf8')
+		(await readFile('data.txt','utf8')).replace(/\r\n/g,'\n')
 		// await Bun.file('data.txt').text()
 	)
 )
