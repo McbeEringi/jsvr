@@ -9,14 +9,17 @@
 	<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic&display=swap" rel="stylesheet">
 </head>
 <body spellcheck="false">
+	<style>img{width:100%;}</style>
+	<a href="./data.toml">sample</a>
 	<input type="file" id="inp">
+	↓click to download↓
 	<img id="img">
 	<script type="module">
 		import{rosenzu}from'./rosenzu.mjs';
 		import{parse}from'https://esm.run/toml';
 
 		const
-		ctx=document.createElement('canvas').getConetxt('2d'),
+		ctx=document.createElement('canvas').getContext('2d'),
 		f2i=w=>img.src='data:image/svg+xml,'+encodeURIComponent(rosenzu(parse(w)));
 
 		f2i(await(await fetch('./data.toml')).text());
