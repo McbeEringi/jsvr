@@ -1,11 +1,12 @@
 #!/bin/env node
 // #!/bin/bun --intall=always
+import{parse}from'toml';
 import{rosenzu}from'./rosenzu.mjs';
 import{readFile}from'node:fs/promises'
 
 console.log(
-	rosenzu(
-		(await readFile('data.txt','utf8')).replace(/\r\n/g,'\n')
+	rosenzu(parse(
+		await readFile('data.toml','utf8')
 		// await Bun.file('data.txt').text()
-	)
+	))
 )

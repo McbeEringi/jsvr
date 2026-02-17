@@ -1,47 +1,45 @@
 const
-dpp=1,
-tr=w=>w[0].map((_,i)=>w.map(x=>x[i])),
-heikin=w=>((
-	p=tr(w).map(x=>x.reduce((a,x)=>a+x)/x.length)
-)=>(
-	p.r=w.reduce((a,x)=>Math.max(a,p.reduce((b,y,i)=>b+(y-x[i])**2,0)**.5),0),
-	p
-))(),
-rosenzu=w=>(
-	w=w.split(/\n{2,}/).map(x=>(
-		x=x.split('\n'),
-		x=((
-			[name,col]=x.shift().split(/\s+/),
-			i=0
-		)=>({
-			name,col,
-			vert:x=x.filter(x=>x).map(x=>(
-				x=x.split(/\s+/).map(x=>isNaN(+x)?x:+x),
-				x[2]&&Object.assign(x,{name:x.pop(),i:++i,col}),
-				x
-			)),
-			sta:x.filter(x=>x.name)
-		}))()
-	)),
-	w.sta=w.reduce((a,x)=>(x.sta.forEach(x=>a[x.name]=[...(a[x.name]||[]),x]),a),{}),
-	Object.assign(w,((
-		x=w.flatMap(x=>x.vert).reduce((a,x)=>(
-			a.minx=Math.min(a.minx||Infinity,x[0]),
-			a.maxx=Math.max(a.maxx||-Infinity,x[0]),
-			a.miny=Math.min(a.miny||Infinity,x[1]),
-			a.maxy=Math.max(a.maxy||-Infinity,x[1]),
-			a
-		),{}),
-		p=[128,256]
-	)=>(
-		x.minx-=p[0],x.maxx+=p[0],
-		x.miny-=p[1],x.maxy+=p[1],
-		x.width=x.maxx-x.minx,
-		x.height=x.maxy-x.miny,
-		x
-	))()),
-	`<svg xmlns="http://www.w3.org/2000/svg" width="${Math.ceil(w.width/80*dpp)*80}" height="${Math.ceil(w.height/80*dpp)*80}" viewBox="${
-		[w.minx,w.miny,w.width,w.height].join(' ')
+avg=w=>w[0].map((_,i)=>w.reduce((a,x)=>a+x[i],0)/w.length),
+o2p=w=>Object.entries(w).map(([k,v])=>`${k}="${v}"`).join(' '),
+rosenzu=({line,config:w})=>(
+	line=line.map(({name,color,vert})=>({
+		name,color,
+		vert:(vert.match(/^.+$/gm)??[]).map(x=>(
+			x=x.split(/\s+/,3),
+			Object.assign([+x[0],+x[1]],x[2]?{name:x[2],line:{name,color}}:{})
+		)),
+		get sta(){return this.vert.filter(x=>x.name);}
+	})),
+	w.sta=Object.entries(
+		line.reduce((a,x)=>(x.sta.forEach(x=>a[x.name]=[...(a[x.name]||[]),x]),a),{})
+	).map(([i,x])=>Object.assign(x,{
+		name:i,
+		avg:avg(x),
+		get r(){return x.reduce((a,x)=>Math.max(a,Math.hypot(...x.map((x,i)=>x-this.avg[i]))),0);}
+	})),
+	w.bb=line.flatMap(x=>x.vert).reduce((a,x)=>x.map((x,i)=>[
+		Math.min(x,a[i][0]),Math.max(x,a[i][1])
+	]),[
+		[Infinity,-Infinity],// x min max
+		[Infinity,-Infinity],// y min max
+	]),
+	w.bb=[
+		[w.bb[0][0]-w.padding[3],w.bb[0][1]+w.padding[1]],
+		[w.bb[1][0]-w.padding[0],w.bb[1][1]+w.padding[2]],
+	],
+	w.size=w.bb.map(x=>x[1]-x[0]),
+	w.text.title.anchor=(x=>[
+		[1,2,0,1][x.includes('left')*2+x.includes('right')],
+		[1,2,0,1][x.includes('top')*2+x.includes('bottom')]
+	])(w.text.title.anchor),
+
+
+	`<svg xmlns="http://www.w3.org/2000/svg" ${
+		o2p((f=>w.size.reduce((a,x,i)=>(a[['width','height'][i]]=f(x*w.dpp),a),{}))(
+			w.size_round?x=>Math.ceil(x/w.size_round)*w.size_round:x=>x
+		))
+	} viewBox="${
+		[...w.bb.map(x=>x[0]),...w.size].join(' ')
 	}">
 	<defs>
 		<style>
@@ -49,36 +47,48 @@ rosenzu=w=>(
 				font-family:"Zen Maru Gothic",sans-serif;font-weight:bold;font-size:64px;
 				paint-order:stroke;stroke-linecap:round;stroke-linejoin:round;
 			}
-			.line{stroke-width:16;}
-			.line_name{font-size:96px;stroke:#000c;stroke-width:16;dominant-baseline:hanging;}
-			.sta_name{stroke:#0008;stroke-width:16;fill:#fff;dominant-baseline:middle;}
+			.line path{stroke-width:16;}
+			.line text{font-size:96px;stroke:#000c;stroke-width:16;dominant-baseline:hanging;}
+			.sta text{stroke:#0008;stroke-width:16;fill:#fff;dominant-baseline:middle;}
 			#dot{stroke:#fffc;stroke-width:16px;}
-			.title{fill:#fff;font-size:128px;dominant-baseline:ideographic;}
+			.title{
+				fill:${w.text.title.color};
+				font-size:${w.text.title.size}px;
+				text-anchor:${['start','middle','end'][w.text.title.anchor[0]]};
+				dominant-baseline:${['hanging','middle','ideographic'][w.text.title.anchor[1]]};
+			}
 		</style>
 		<circle id="dot" r="16"/>
-		<pattern id="_grid" patternUnits="userSpaceOnUse" width="100" height="100">
-			<rect width="100" height="100" style="stroke:#fff;fill:none;stroke-width:16;opacity:.5;"/>
-		</pattern>
-		<pattern id="grid" patternUnits="userSpaceOnUse" width="1000" height="1000">
-			<rect width="1000" height="1000" fill="#223"/>
-			<rect width="1000" height="1000" style="stroke:#fff;fill:url(#_grid);stroke-width:16;opacity:.2;"/>
-		</pattern>
+		<path id="fill" d="M${w.bb.map(x=>x[0])}v${w.size[1]}h${w.size[0]}v${-w.size[1]}"/>
+		${w.grid.map((x,i)=>`
+		<pattern id="grid${i}" patternUnits="userSpaceOnUse" x="${x.offset[0]}" y="${x.offset[1]}" width="${x.size[0]}" height="${x.size[1]}">
+			<rect width="${x.size[0]}" height="${x.size[1]}" style="stroke:${x.color};fill:none;stroke-width:${x.width};"/>
+		</pattern>`).join('')}
 	</defs>
-	<path fill="url(#grid)" d="M${[w.minx,w.miny]}v${w.height}h${w.width}v${-w.height}"/>
-	<text class="title" x="${w.minx+64}" y="${w.maxy-64}">J鯖サバイバル 路線ネットワーク</text>
-`+
-	w.map((x,p)=>(
-		p=x.sta.length/2-1|0,
-		p=heikin(x.sta.slice(p,p+2)),
-		`<g>
-	<path fill="none" stroke="${x.col}" class="line" d="${x.vert.map((x,i)=>('ML'[i]||'')+x.join(',')).join(' ')}"/>
-	<text class="line_name" x="${p[0]+16}" y="${p[1]+16}" fill="${x.col}">${x.name}</text>
-</g>`
-	)).join('\n')+
-	`
-<g class="sta">${Object.entries(w.sta).map(([i,x])=>`<g>
-	${x.map(x=>`<use href="#dot" transform="translate(${x.join(',')})" fill="${x.col}"/>`).join('')}
-	<g transform="translate(${heikin(x).join(',')})"><text class="sta_name" transform="rotate(-60)translate(${heikin(x).r+24},0)">${i}</text></g>
-</g>`).join('\n')}</g>
-</svg>`);
+	<use href="#fill" fill="${w.background_color}"/>
+	${w.grid.map((_,i)=>`<use href="#fill" fill="url(#grid${i})"/>`).join('')}
+	<text class="title" ${
+		o2p(w.bb.reduce((a,x,i)=>(a['xy'[i]]=[
+			x[0]+w.text.title.margin[i],
+			x[0]+w.size[i]/2,
+			x[1]-w.text.title.margin[i]
+		][w.text.title.anchor[i]],a),{}))
+	}>${w.text.title.value}</text>
+	<g class="line">${line.map((x,p)=>(p=x.sta.length/2-1|0,p=avg(x.sta.slice(p,p+2)),`
+		<g>
+			<path fill="none" stroke="${x.color}" d="${x.vert.map((x,i)=>('ML'[i]||'')+x.join(',')).join(' ')}"/>
+			<text x="${p[0]+16}" y="${p[1]+16}" fill="${x.color}">${x.name}</text>
+		</g>`
+	)).join('')}
+	</g>
+	<g class="sta">${w.sta.map(x=>`
+		<g>
+			${x.map(x=>`<use href="#dot" transform="translate(${x.join(',')})" fill="${x.line.color}"/>`).join('')}
+			<g transform="translate(${x.avg.join(',')})"><text transform="rotate(-60)translate(${x.r+24},0)">${x.name}</text></g>
+		</g>`).join('')}
+	</g>
+</svg>
+`
+)
+
 export{rosenzu};
