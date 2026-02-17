@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<title>路線図つくるやつ</title>
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic&display=swap" rel="stylesheet">
+</head>
+<body spellcheck="false">
+	<input type="file" id="inp">
+	<img id="img">
+	<script type="module">
+		import{rosenzu}from'./rosenzu.mjs';
+		import{parse}from'https://esm.run/toml';
+
+		const
+		ctx=document.createElement('canvas').getConetxt('2d'),
+		f2i=w=>img.src='data:image/svg+xml,'+encodeURIComponent(rosenzu(parse(w)));
+
+		f2i(await(await fetch('./data.toml')).text());
+
+		inp.onchange=async _=>f2i(await inp.files[0].text());
+		img.onclick=async _=>(
+			await img.decode(),
+			Object.assign(ctx.canvas,{width:img.naturalWidth,height:img.naturalHeight}),
+			ctx.drawImage(img,0,0),
+			Object.assign(document.createElement('a'),{
+				href:ctx.canvas.toDataURL(),
+				download:`${new Date().toLocaleString()}.png`
+			}).click()
+		)
+	</script>
+</body>
+</html>

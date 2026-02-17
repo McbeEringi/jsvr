@@ -27,7 +27,6 @@
 		size=64
 		color='#fff'
 		angle=60
-		tategaki=false
 
 	[config.text.line]
 		size=96

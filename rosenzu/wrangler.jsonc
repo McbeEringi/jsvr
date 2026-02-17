@@ -1,0 +1,13 @@
+{
+	"$schema":"node_modules/wrangler/config-schema.json",
+	"name":"rosenzu",
+	"compatibility_date":"2025-07-15",
+
+	"assets":{
+		"directory":"./",
+		"not_found_handling":"404-page"
+	},
+	"observability":{
+		"enabled":true
+	}
+}
