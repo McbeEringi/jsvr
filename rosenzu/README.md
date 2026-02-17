@@ -6,10 +6,15 @@ data.txtに更新あったら適当にプルリク出してくれると嬉しい
 - node
 - imagemagick
 - make
+- zen maruゴシック
 
 Windowsでも動くがimagemagickが全然だめなのでブラウザ等で手動でpngにする必要あり
 
 プルリクください
+
+```sh
+yay -Sy nodejs imagemagick make ttf-zen-maru-gothic
+```
 
 ## Usage
 ### pngが欲しい
