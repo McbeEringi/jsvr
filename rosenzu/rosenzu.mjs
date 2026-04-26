@@ -6,7 +6,7 @@ wh=([w,h])=>`width="${w}" height="${h}"`,
 rosenzu=({line,config:w})=>(
 	line=line.map(({name,color,vert})=>({
 		name,color,
-		vert:(vert.match(/^.+$/gm)??[]).map(x=>(
+		vert:(vert.replace(/\/\/.*|#.*|\/\*[.\s]*\*\//g,'').match(/^.+$/gm)??[]).map(x=>(
 			x=x.split(/\s+/,3),
 			Object.assign([+x[0],+x[1]],x[2]?{name:x[2],line:{name,color}}:{})
 		)),
